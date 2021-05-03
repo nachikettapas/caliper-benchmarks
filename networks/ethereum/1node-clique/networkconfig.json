@@ -2,8 +2,8 @@
     "caliper": {
         "blockchain": "ethereum",
         "command" : {
-            "start": "docker-compose -f ./networks/ethereum/1node-clique/docker-compose.yml up -d && sleep 60s",
-            "end" : "docker-compose -f ./networks/ethereum/1node-clique/docker-compose.yml down"
+            "start": "",
+            "end" : ""
           }
     },
     "ethereum": {
@@ -14,12 +14,17 @@
         "fromAddressPassword": "password",
         "transactionConfirmationBlocks": 2,
         "contracts": {
-            "simple": {
-                "path": "./src/ethereum/simple/simple.json",
+            "marketplace": {
+                "path": "./src/ethereum/marketplace/marketplace.json",
                 "estimateGas": true,
                 "gas": {
-                    "query": 100000,
-                    "transfer": 70000
+                    "announce": 5000000,
+                    "addPlayer": 5000000,
+                    "register": 5000000,
+                    "setReceived": 5000000,
+                    "commit": 5000000,
+                    "reveal": 5000000,
+                    "calculateResult": 5000000
                 }
             }
         }

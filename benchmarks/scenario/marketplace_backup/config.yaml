@@ -1,0 +1,26 @@
+simpleArgs: &simple-args
+  initialMoney: 10000
+  moneyToTransfer: 100
+  numberOfAccounts: &number-of-accounts 1000
+
+test:
+  name: marketplace
+  description: >-
+    This is a benchmark for Marketplace solution. It benchmarks the 
+    performance of various transactions.
+  workers:
+    type: local
+    number: 1
+  rounds:
+    - label: announce
+      description: >-
+        Test description for the announcement of design for voting in marketplace
+        contract.
+      txNumber: *number-of-accounts
+      rateControl:
+        type: fixed-rate
+        opts:
+          tps: 50
+      workload:
+        module: benchmarks/scenario/marketplace/announce.js
+        arguments: *simple-args

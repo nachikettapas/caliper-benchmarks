@@ -4,6 +4,19 @@
 
 'use strict';
 
+// Investigate submitTransaction() using network model to create an asset of specific size in the registry
+// - label: create-asset-100
+//     chaincodeID: fixed-asset
+//     txNumber:
+//     - 1000
+//     rateControl:
+//     - type: fixed-rate
+//       opts:
+//         tps: 50
+//     arguments:
+//       chaincodeID: fixed-asset | fixed-asset-base
+//       byteSize: 100
+//     callback: benchmark/network-model/lib/create-asset.js
 
 const bytes = (s) => {
     return ~-encodeURI(s).split(/%..|./).length;
@@ -50,8 +63,13 @@ class CreateAssetWorkload extends WorkloadModuleBase {
             byteSize: this.byteSize
         };
 
-        const paddingSize = this.byteSize - bytes(JSON.stringify(this.asset));
-        this.asset.content = 'B'.repeat(paddingSize);
+        const rand = 'random';
+        let idx = 0;
+        while (bytes(JSON.stringify(this.asset)) < this.byteSize) {
+            const letter = rand.charAt(idx);
+            idx = idx >= rand.length ? 0 : idx+1;
+            this.asset.content = this.asset.content + letter;
+        }
     }
 
     /**

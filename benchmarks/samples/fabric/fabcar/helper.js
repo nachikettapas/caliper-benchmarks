@@ -20,17 +20,13 @@ let models = ['Prius', 'Mustang', 'Tucson', 'Passat', 'S', '205', 'S22L', 'Punto
 let owners = ['Tomoko', 'Brad', 'Jin Soo', 'Max', 'Adrianna', 'Michel', 'Aarav', 'Pari', 'Valeria', 'Shotaro'];
 
 let carNumber;
-let color;
-let make;
-let model;
-let owner;
 let txIndex = 0;
 
-module.exports.createCar = async function (bc, workerIndex, args) {
+module.exports.createCar = async function (bc, contx, args, color, make, model, owner) {
 
     while (txIndex < args.assets) {
         txIndex++;
-        carNumber = 'Client' + workerIndex + '_CAR' + txIndex.toString();
+        carNumber = 'Client' + contx.clientIdx + '_CAR' + txIndex.toString();
         color = colors[Math.floor(Math.random() * colors.length)];
         make = makes[Math.floor(Math.random() * makes.length)];
         model = models[Math.floor(Math.random() * models.length)];

@@ -14,35 +14,106 @@
 
 'use strict';
 
-const OperationBase = require('./utils/operation-base');
-const SimpleState = require('./utils/simple-state');
+const { WorkloadModuleBase } = require('@hyperledger/caliper-core');
+
+const Dictionary = 'abcdefghijklmnopqrstuvwxyz';
 
 /**
  * Workload module for initializing the SUT with various accounts.
  */
-class Open extends OperationBase {
+class SimpleOpenWorkload extends WorkloadModuleBase {
 
     /**
      * Initializes the parameters of the workload.
      */
     constructor() {
         super();
+        this.accountPrefix = '';
+        this.txIndex = -1;
     }
 
     /**
-     * Create an empty state representation.
-     * @return {SimpleState} The state instance.
+     * Generate string by picking characters from the dictionary variable.
+     * @param {number} number Character to select.
+     * @returns {string} string Generated string based on the input number.
+     * @private
      */
-    createSimpleState() {
-        return new SimpleState(this.workerIndex, this.initialMoney, this.moneyToTransfer);
+    static _get26Num(number){
+        let result = '';
+
+        while(number > 0) {
+            result += Dictionary.charAt(number % Dictionary.length);
+            number = parseInt(number / Dictionary.length);
+        }
+
+        return result;
+    }
+
+    /**
+     * Generate unique account key for the transaction.
+     * @returns {string} The account key.
+     * @private
+     */
+    _generateAccount() {
+        return this.roundArguments.accountPhasePrefix + this.accountPrefix + SimpleOpenWorkload._get26Num(this.txIndex + 1);
+    }
+
+    /**
+     * Generates simple workload.
+     * @returns {{verb: String, args: Object[]}[]} Array of workload argument objects.
+     */
+    _generateWorkload() {
+        let workload = [];
+        for(let i= 0; i < this.roundArguments.txnPerBatch; i++) {
+            this.txIndex++;
+
+            let accountId = this._generateAccount();
+
+            workload.push({
+                contract: 'simple',
+                verb: 'open',
+                value: this.roundArguments.money,
+                args: [accountId, this.roundArguments.money],
+                readOnly: false
+            });
+        }
+        return workload;
+    }
+
+    /**
+     * Initialize the workload module with the given parameters.
+     * @param {number} workerIndex The 0-based index of the worker instantiating the workload module.
+     * @param {number} totalWorkers The total number of workers participating in the round.
+     * @param {number} roundIndex The 0-based index of the currently executing round.
+     * @param {Object} roundArguments The user-provided arguments for the round from the benchmark configuration file.
+     * @param {ConnectorBase} sutAdapter The adapter of the underlying SUT.
+     * @param {Object} sutContext The custom context object provided by the SUT adapter.
+     * @async
+     */
+    async initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext) {
+        await super.initializeWorkloadModule(workerIndex, totalWorkers, roundIndex, roundArguments, sutAdapter, sutContext);
+
+        if(!this.roundArguments.money) {
+            throw new Error('simple.open - the "money" argument is missing');
+        }
+
+        if(!this.roundArguments.accountPhasePrefix) {
+            throw new Error('simple.open - the "accountPhasePrefix" argument is missing');
+        }
+
+        if(!this.roundArguments.txnPerBatch) {
+            this.roundArguments.txnPerBatch = 1;
+        }
+
+        this.accountPrefix = SimpleOpenWorkload._get26Num(workerIndex);
     }
 
     /**
      * Assemble TXs for opening new accounts.
      */
     async submitTransaction() {
-        let createArgs = this.simpleState.getOpenAccountArguments();
-        await this.sutAdapter.sendRequests(this.createConnectorRequest('open', createArgs));
+        let args = this._generateWorkload();
+        await this.sutAdapter.sendRequests(args);
     }
 }
 
@@ -51,7 +122,7 @@ class Open extends OperationBase {
  * @return {WorkloadModuleInterface}
  */
 function createWorkloadModule() {
-    return new Open();
+    return new SimpleOpenWorkload();
 }
 
 module.exports.createWorkloadModule = createWorkloadModule;
